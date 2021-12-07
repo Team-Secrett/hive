@@ -21,5 +21,7 @@ pvp_loop(Turn) :-
   NextTurn is Turn + 1,
   pvp_loop(NextTurn).
 
-pvp() :- pvp_loop(1).
+pvp() :- pvp_loop(
+  1
+).
 

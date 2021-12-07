@@ -5,7 +5,6 @@
 ]).
 :- use_module('./src/pvp', [ pvp ]).
 
-
 get_player_turn(Turn, Ans) :- Ans is 2 - mod(Turn, 2).
 
 handle_option(Option) :-
