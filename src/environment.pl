@@ -66,13 +66,23 @@ move_queen(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'q',
   (
     is_adjacent(Q, R, NQ, NR);
-    (R = -1, D = -1, S = -1)
+    (Q = -1, R = -1, S = -1)
   ),
   \+ position_filled(position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_ant(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'a',
+  \+ position_filled(position(NQ, NR, NS)),
+  move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
+
+move_beetle(piece(Class, Color, ID, Q, R, S), position(NQ, NR, NS)) :-
+  Class = 'b',
+  (
+    is_adjacent(Q, R, NQ, NR);
+    (Q = -1, R = -1, S = -1)
+  ),
+  \+ position_filled(position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 get_side_position(position(Q, R, S), Side, position(NQ, NR, NS)) :-
@@ -160,7 +170,8 @@ step(
     );
     (
       move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
+      move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+      move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     )
   ).
 
@@ -174,5 +185,11 @@ test() :-
   step(Action3),
   parse_action("wq1 S bq1", Action4),
   step(Action4),
+  parse_action("bb1 S wq1", Action5),
+  step(Action5),
+  parse_action("bb1 O wq1", Action6),
+  step(Action6),
+  parse_action("bb1 S wq1", Action7),
+  step(Action7),
   get_pieces(Pieces),
   write(Pieces).
