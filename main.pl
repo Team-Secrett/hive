@@ -8,10 +8,10 @@
 get_player_turn(Turn, Ans) :- Ans is 2 - mod(Turn, 2).
 
 handle_option(Option) :-
-  Option =:= 1,
+  Option =:= "1",
   write_line('Option 1: NOT IMPLEMENTED YET').
 handle_option(Option) :-
-  Option =:= 2,
+  Option =:= "2",
   write_line('Option 2'),
   pvp().
 
@@ -23,6 +23,5 @@ main() :-
     '2: Play against player'
   ]),
   write('> '),
-  read(Option),
+  read_line_to_string(user_input, Option),
   handle_option(Option).
-
