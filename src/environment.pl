@@ -18,12 +18,12 @@ cell_neighbours(Q, R, NQ, NR) :-
 
 % Check if 2 cells are adjacent
 is_adjacent(Q1, R1, Q2, R2) :-
-  Q1 = Q2, R1 is R2 - 1;
-  Q1 = Q2, R1 is R2 + 1;
-  Q1 is Q2 - 1, R1 = R2;
-  Q1 is Q2 - 1, R1 is R2 + 1;
-  Q1 is Q2 + 1, R1 is R2 - 1;
-  Q1 is Q2 + 1, R1 = R2.
+  (Q1 is Q2, R1 is R2 - 1);
+  (Q1 is Q2, R1 is R2 + 1);
+  (Q1 is Q2 - 1, R1 is R2);
+  (Q1 is Q2 - 1, R1 is R2 + 1);
+  (Q1 is Q2 + 1, R1 is R2 - 1);
+  (Q1 is Q2 + 1, R1 is R2).
 
 
 % Piece methods
@@ -53,7 +53,19 @@ piece_neighbours(Q, R, Neighbours) :-
     Neighbours
   ).
 
+position_filled(Q, R) :- piece(_, _, _, Q, R, _).
 position_filled(position(Q, R, S)) :- piece(_, _, _, Q, R, S).
+
+deltas(Q1, R1, Q2, R2, DQ, DR) :-
+  DQ is Q2 - Q1,
+  DR is R2 - R1.
+
+grasshopper_can_move(Start, Start, _).
+grasshopper_can_move(position(Q1, R1, _), position(Q2, R2, _), position(DQ, DR, _)) :-
+  position_filled(Q1, R1),
+  NQ is Q1 + DQ,
+  NR is R1 + DR,
+  grasshopper_can_move(position(NQ, NR, _), position(Q2, R2, _), position(DQ, DR, _)).
 
 % Move a piece to a new position or creat it if does not exist
 move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
@@ -64,6 +76,7 @@ move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
 
 move_queen(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'q',
+  write("Moving queen"),
   (
     is_adjacent(Q, R, NQ, NR);
     (Q = -1, R = -1, S = -1)
@@ -73,17 +86,27 @@ move_queen(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
 
 move_ant(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'a',
+  write("Moving ant"),
   \+ position_filled(position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_beetle(piece(Class, Color, ID, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'b',
+  write("Moving beetle"),
   (
     is_adjacent(Q, R, NQ, NR);
     (Q = -1, R = -1, S = -1)
   ),
-  \+ position_filled(position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
+
+move_grasshopper(piece(Class, Color, ID, Q, R, S), position(NQ, NR, NS)) :-
+  Class = 'g',
+  write("Moving grasshopper"),
+  \+ position_filled(position(NQ, NR, NS)),
+  is_adjacent(AdjQ, AdjR, Q, R),
+  deltas(Q, R, AdjQ, AdjR, DQ, DR),
+  grasshopper_can_move(position(Q, R, S), position(NQ, NR, NS), position(DQ, DR, 0)).
+
 
 get_side_position(position(Q, R, S), Side, position(NQ, NR, NS)) :-
   Side = "N",
@@ -171,7 +194,12 @@ step(
     (
       move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
       move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
+      move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+      move_grasshopper(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+      (
+        write("Invalid move.\n"),
+        false
+      )
     )
   ).
 
@@ -181,15 +209,19 @@ test() :-
   step(Action),
   parse_action("bq1 NW wq1", Action2),
   step(Action2),
-  parse_action("wa1 NE bq1", Action3),
+  parse_action("wg1 NW bq1", Action3),
   step(Action3),
-  parse_action("wq1 S bq1", Action4),
+  parse_action("wg1 SE wq1", Action4),
   step(Action4),
-  parse_action("bb1 S wq1", Action5),
-  step(Action5),
-  parse_action("bb1 O wq1", Action6),
-  step(Action6),
-  parse_action("bb1 S wq1", Action7),
-  step(Action7),
+  % parse_action("wa1 NE bq1", Action3),
+  % step(Action3),
+  % parse_action("wq1 S bq1", Action4),
+  % step(Action4),
+  % parse_action("bb1 S wq1", Action5),
+  % step(Action5),
+  % parse_action("bb1 O wq1", Action6),
+  % step(Action6),
+  % parse_action("bb1 S wq1", Action7),
+  % step(Action7),
   get_pieces(Pieces),
   write(Pieces).
