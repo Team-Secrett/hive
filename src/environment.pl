@@ -1,7 +1,8 @@
 :- module(environment, [
   step/1,
   parse_action/2,
-  get_player_turn/2
+  get_player_turn/2,
+  winner/1
 ]).
 :- use_module('./lib/string_methods').
 :- use_module('./moves/index').
@@ -34,6 +35,39 @@ parse_action(ActionStr, Action) :-
   get_piece_from_str(Str2, Piece2),
   Action = action(Piece1, Piece2, Side).
 
+can_move(piece(Class, Color, Id, Q, R, S)) :-
+  \+ (
+    articulation_point(piece(Class, Color, Id, Q, R, S)),
+    write("This move disconnect the hive.\n")
+  ),
+  \+ (
+    has_piece_over(position(Q, R, S)),
+    write("Cannot move, has a piece over.\n")
+  ).
+
+% -1 -> No winner yet, 0 -> Tie, elsewhere player [1 | 2] wins
+winner(Winner) :-
+  get_piece_from_str("wq1", piece(Class1, Color1, Id1, Q1, R1, S1)),
+  get_piece_from_str("bq1", piece(Class2, Color2, Id2, Q2, R2, S2)),
+  (
+    (
+      is_surrounded(Q1, R1),
+      is_surrounded(Q2, R2),
+      Winner = 0, !
+    );
+    (
+      is_surrounded(Q1, R1),
+      \+ is_surrounded(Q2, R2),
+      Winner = 2, !
+    );
+    (
+      is_surrounded(Q2, R2),
+      \+ is_surrounded(Q1, R1),
+      Winner = 1, !
+    );
+    Winner = -1
+  ).
+
 step(
   action(
     piece(Class1, Color1, Id1, Q1, R1, S1),
@@ -58,9 +92,8 @@ step(
       ; move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     );
     (
-      articulation_point(piece(Class1, Color1, Id1, Q1, R1, S1))
-      -> (write("This move disconnect the hive.\n"), false)
-      ; (
+      can_move(piece(Class1, Color1, Id1, Q1, R1, S1)),
+      (
         move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
         move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
         move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));

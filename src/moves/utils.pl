@@ -11,7 +11,9 @@
   connected_component/3,
   articulation_point/1,
   deltas/6,
-  get_side_position/3
+  get_side_position/3,
+  has_piece_over/1,
+  is_surrounded/2
 ]).
 :- dynamic piece/6.
 
@@ -63,6 +65,17 @@ piece_neighbours(Q, R, Neighbours) :-
 % check if position is occupied by some other piece
 position_filled(Q, R) :- piece(_, _, _, Q, R, _).
 position_filled(position(Q, R, S)) :- piece(_, _, _, Q, R, S).
+
+has_piece_over(position(Q, R, S)) :-
+  get_pieces(Pieces),
+  NS is S + 1,
+  Piece = piece(Class, Color, Id, Q, R, NS),
+  member(Piece, Pieces).
+
+is_surrounded(Q, R) :-
+  piece_neighbours(Q, R, Neighbours),
+  length(Neighbours, Length),
+  Length = 6.
 
 % check if has a neighbour in hive
 is_touching_hive(Q, R) :-

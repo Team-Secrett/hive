@@ -9,7 +9,8 @@
   parse_action/2,
   step/1,
   get_player_turn/2,
-  get_pieces/1
+  get_pieces/1,
+  winner/1
 ]).
 
 
@@ -23,6 +24,18 @@ turn_info(Turn) :-
 clear_screen() :- write('\33\[2J').
 
 pvp_loop(Turn) :-
+  winner(W),
+  W = 1,
+  write_line("Player 1 wins"), !.
+pvp_loop(Turn) :-
+  winner(W),
+  W = 2,
+  write_line("Player 2 wins"), !.
+pvp_loop(Turn) :-
+  winner(W),
+  W = 0,
+  write_line("Is a tie"), !.
+pvp_loop(Turn) :-
   turn_info(Turn),
   write_line('Type your move'),
   read_line_to_string(user_input, MoveStr),
@@ -32,4 +45,5 @@ pvp_loop(Turn) :-
   step(Action)
     -> (NextTurn is Turn + 1, pvp_loop(NextTurn))
     ; pvp_loop(Turn).
+
 pvp() :- pvp_loop(1).
