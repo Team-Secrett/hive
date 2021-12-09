@@ -65,6 +65,31 @@ is_touching_hive(Q, R) :-
   length(Neighbours, L),
   L > 0.
 
+% find the pieces in connected component starting at a Piece
+connected_component([], Marked, Component) :- append([], Marked, Component).
+connected_component([piece(Class, Color, Id, Q, R, S) | Stack], Marked, Component) :-
+  piece_neighbours(Q, R, Neighbours),
+  member(Next, Neighbours),
+  \+ member(Next, Marked),
+  append(Stack, [Next], NStack),
+  append(Marked, [Next], NMarked),
+  connected_component([piece(Class, Color, Id, Q, R, S) | NStack], NMarked, Component), !.
+connected_component([Current | Stack], Marked, Component) :-
+  connected_component(Stack, Marked, Component).
+
+% 
+articulation_point(piece(_, _, _, _, _, S)) :- S > 0.
+articulation_point(piece(Class, Color, Id, Q, R, S)) :-
+  get_pieces(Pieces),
+  length(Pieces, LPieces),
+  Remaining is LPieces - 1,
+  piece_neighbours(Q, R, [Start|_]),
+  remove_piece(piece(Class, Color, Id, Q, R, S)),
+  connected_component([Start], [], Component),
+  add_piece(piece(Class, Color, Id, Q, R, S)),
+  length(Component, LComponent),
+  Remaining \= LComponent.
+
 deltas(Q1, R1, Q2, R2, DQ, DR) :-
   DQ is Q2 - Q1,
   DR is R2 - R1.
@@ -227,6 +252,10 @@ step(
       move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     );
     (
+      (
+        \+ articulation_point(piece(Class1, Color1, Id1, Q1, R1, S1));
+        (write("This move disconnect the hive.\n"), false)
+      ),
       move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
       move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
       move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
@@ -249,7 +278,7 @@ test() :-
   step(A3),
   parse_action("bs1 SE wq1", A4),
   step(A4),
-  parse_action("ws1 N wq1", A5),
-  step(A5),
+  % parse_action("wq1 N bs1", A5),
+  % step(A5),
   get_pieces(Pieces),
   write(Pieces).
