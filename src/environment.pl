@@ -140,6 +140,7 @@ ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
 
 queen_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   \+ position_filled(position(NQ, NR, NS)),
+  is_touching_hive(NQ, NR),
   is_adjacent(Q, R, NQ, NR).
 
 ant_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
@@ -147,6 +148,7 @@ ant_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   is_touching_hive(NQ, NR).
 
 beetle_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  \+ position_filled(position(NQ, NR, NS)),
   is_touching_hive(NQ, NR),
   is_adjacent(Q, R, NQ, NR).
 
