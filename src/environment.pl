@@ -123,7 +123,20 @@ spider_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
     % ])
   ) ->
     add_piece(piece(Class, Color, Id, Q, R, S));
-    add_piece(piece(Class, Color, Id, Q, R, S)), false.
+    (add_piece(piece(Class, Color, Id, Q, R, S)), false).
+
+ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  remove_piece(piece(Class, Color, Id, Q, R, S)),
+  (
+    \+ position_filled(position(NQ, NR, NS)),
+    is_adjacent(AdjQ, AdjR, Q, R),
+    position_filled(position(AdjQ, AdjR, 0)),
+    is_adjacent(AdjQ2, AdjR2, AdjQ, AdjR),
+    position_filled(position(AdjQ2, AdjR2, 0)),
+    is_adjacent(NQ, NR, AdjQ2, AdjR2)
+  ) ->
+    add_piece(piece(Class, Color, Id, Q, R, S));
+    (add_piece(piece(Class, Color, Id, Q, R, S)), false).
 
 % Move a piece to a new position or creat it if does not exist
 move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
@@ -164,8 +177,12 @@ move_grasshopper(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
 
 move_spider(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 's',
-  write_lines([Class, Color, Id, Q, R, S]),
   spider_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
+  move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
+
+move_ladybug(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  Class = 'l',
+  ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 get_side_position(position(Q, R, S), Side, position(NQ, NR, NS)) :-
@@ -249,25 +266,24 @@ step(
   get_side_position(position(Q2, R2, S2), Side, position(NQ, NR, NS)),
   (Q1 = -1, R1 = -1, S1 = -1 ->
     (
-      (
-        \+ position_filled(NQ, NR);
-        (write("The position is already occuppied.\n"), false)
-      ),
-      move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
+      position_filled(NQ, NR)
+      -> (write("The position is already occuppied.\n"), false)
+      ; move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     );
     (
-      (
-        \+ articulation_point(piece(Class1, Color1, Id1, Q1, R1, S1));
-        (write("This move disconnect the hive.\n"), false)
-      ),
-      move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_grasshopper(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      move_spider(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
-      (
-        write("Invalid move.\n"),
-        false
+      articulation_point(piece(Class1, Color1, Id1, Q1, R1, S1))
+      -> (write("This move disconnect the hive.\n"), false)
+      ; (
+        move_queen(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_ant(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_beetle(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_grasshopper(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_spider(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_ladybug(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        (
+          write("Invalid move.\n"),
+          false
+        )
       )
     )
   ).
@@ -280,9 +296,9 @@ test() :-
   step(A2),
   parse_action("ws1 NW bq1", A3),
   step(A3),
-  parse_action("bs1 SE wq1", A4),
+  parse_action("bl1 NW ws1", A4),
   step(A4),
-  % parse_action("wq1 N bs1", A5),
-  % step(A5),
+  parse_action("bl1 NE ws1", A5),
+  step(A5),
   get_pieces(Pieces),
   write(Pieces).
