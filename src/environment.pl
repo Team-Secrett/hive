@@ -1,5 +1,5 @@
 :- module(environment, [
-  step/1,
+  step/2,
   parse_action/2,
   get_player_turn/2,
   winner/1
@@ -45,6 +45,20 @@ can_move(piece(Class, Color, Id, Q, R, S)) :-
     write("Cannot move, has a piece over.\n")
   ).
 
+can_add(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), Turn) :-
+  \+ (
+    position_filled(NQ, NR),
+    write("The position is already occuppied.\n")
+  ),
+  \+ (
+    (Turn > 2, Color = b, has_white_neighbour(position(NQ, NR, NS))),
+    write("New position touch white piece.\n")
+  ),
+  \+ (
+    (Turn > 2, Color = w, has_black_neighbour(position(NQ, NR, NS))),
+    write("New position touch black piece.\n")
+  ).
+
 % -1 -> No winner yet, 0 -> Tie, elsewhere player [1 | 2] wins
 winner(Winner) :-
   get_piece_from_str("wq1", piece(Class1, Color1, Id1, Q1, R1, S1)),
@@ -73,7 +87,8 @@ step(
     piece(Class1, Color1, Id1, Q1, R1, S1),
     piece(Class2, Color2, Id2, Q2, R2, S2),
     Side
-  )
+  ),
+  Turn
 ) :-
   Class1 = Class2, Color1 = Color2, Id1 = Id2,
   add_piece(piece(Class1, Color1, Id1, 0, 0, 0)), !.
@@ -82,14 +97,14 @@ step(
     piece(Class1, Color1, Id1, Q1, R1, S1),
     piece(Class2, Color2, Id2, Q2, R2, S2),
     Side
-  )
+  ),
+  Turn
 ) :-
   get_side_position(position(Q2, R2, S2), Side, position(NQ, NR, NS)),
   (Q1 = -1, R1 = -1, S1 = -1 ->
     (
-      position_filled(NQ, NR)
-      -> (write("The position is already occuppied.\n"), false)
-      ; move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
+      can_add(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS), Turn),
+      move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     );
     (
       can_move(piece(Class1, Color1, Id1, Q1, R1, S1)),

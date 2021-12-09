@@ -7,7 +7,7 @@
 ]).
 :- use_module('./environment', [
   parse_action/2,
-  step/1,
+  step/2,
   get_player_turn/2,
   get_pieces/1,
   winner/1
@@ -42,7 +42,7 @@ pvp_loop(Turn) :-
   clear_screen(),
   write_list(['> You typed: ', MoveStr, '\n']),
   parse_action(MoveStr, Action),
-  step(Action)
+  step(Action, Turn)
     -> (NextTurn is Turn + 1, pvp_loop(NextTurn))
     ; pvp_loop(Turn).
 

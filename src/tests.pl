@@ -93,7 +93,7 @@ test_tie() :-
   W = 0.
 
 test() :-
-  (test_tie() ; true),
+  (test_beetle_over_piece() ; true),
   get_pieces(Pieces),
   write(Pieces),
   write('\n').

@@ -13,7 +13,9 @@
   deltas/6,
   get_side_position/3,
   has_piece_over/1,
-  is_surrounded/2
+  is_surrounded/2,
+  has_white_neighbour/1,
+  has_black_neighbour/1
 ]).
 :- dynamic piece/6.
 
@@ -82,6 +84,17 @@ is_touching_hive(Q, R) :-
   piece_neighbours(Q, R, Neighbours),
   length(Neighbours, L),
   L > 0.
+
+% position has white neighbour
+has_white_neighbour(position(Q, R, S)) :-
+  piece_neighbours(Q, R, Neighbours),
+  member(piece(_, Color, _, _, _, _), Neighbours),
+  Color = w.
+
+has_black_neighbour(position(Q, R, S)) :-
+  piece_neighbours(Q, R, Neighbours),
+  member(piece(_, Color, _, _, _, _), Neighbours),
+  Color = b.
 
 % find the pieces in connected component starting at a Piece
 connected_component([], Marked, Component) :- append([], Marked, Component).
