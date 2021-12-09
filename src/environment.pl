@@ -249,6 +249,10 @@ step(
   get_side_position(position(Q2, R2, S2), Side, position(NQ, NR, NS)),
   (Q1 = -1, R1 = -1, S1 = -1 ->
     (
+      (
+        \+ position_filled(NQ, NR);
+        (write("The position is already occuppied.\n"), false)
+      ),
       move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
     );
     (

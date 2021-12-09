@@ -23,15 +23,13 @@ turn_info(Turn) :-
 clear_screen() :- write('\33\[2J').
 
 pvp_loop(Turn) :-
-  clear_screen(),
   turn_info(Turn),
   write_line('Type your move'),
   read_line_to_string(user_input, MoveStr),
+  clear_screen(),
   write_list(['> You typed: ', MoveStr, '\n']),
   parse_action(MoveStr, Action),
-  write_list(["Action: ", Action, '\n']),
-  (step(Action) ; true),
-  NextTurn is Turn + 1,
-  pvp_loop(NextTurn).
-
+  step(Action)
+    -> (NextTurn is Turn + 1, pvp_loop(NextTurn))
+    ; pvp_loop(Turn).
 pvp() :- pvp_loop(1).
