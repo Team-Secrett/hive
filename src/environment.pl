@@ -77,7 +77,7 @@ connected_component([piece(Class, Color, Id, Q, R, S) | Stack], Marked, Componen
 connected_component([Current | Stack], Marked, Component) :-
   connected_component(Stack, Marked, Component).
 
-% 
+% Check if a piece is an articulation point (breaks the hive if removed)
 articulation_point(piece(_, _, _, _, _, S)) :- S > 0.
 articulation_point(piece(Class, Color, Id, Q, R, S)) :-
   get_pieces(Pieces),
@@ -101,6 +101,12 @@ grasshopper_can_move(position(Q1, R1, _), position(Q2, R2, _), position(DQ, DR, 
   NR is R1 + DR,
   grasshopper_can_move(position(NQ, NR, _), position(Q2, R2, _), position(DQ, DR, _)).
 
+grasshopper_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  \+ position_filled(position(NQ, NR, NS)),
+  is_adjacent(AdjQ, AdjR, Q, R),
+  deltas(Q, R, AdjQ, AdjR, DQ, DR),
+  grasshopper_can_move(position(Q, R, S), position(NQ, NR, NS), position(DQ, DR, 0)).
+
 spider_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   remove_piece(piece(Class, Color, Id, Q, R, S)),
   (
@@ -115,12 +121,6 @@ spider_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
     \+ (AdjQ2 = Q, AdjR2 = R),
     \+ (NQ = AdjQ, NR = AdjR),
     is_adjacent(NQ, NR, AdjQ2, AdjR2)
-    % write("PATH"),
-    % write_lines([
-    %   "HERE",
-    %   AdjQ, AdjR,
-    %   AdjQ2, AdjR2
-    % ])
   ) ->
     add_piece(piece(Class, Color, Id, Q, R, S));
     (add_piece(piece(Class, Color, Id, Q, R, S)), false).
@@ -138,6 +138,31 @@ ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
     add_piece(piece(Class, Color, Id, Q, R, S));
     (add_piece(piece(Class, Color, Id, Q, R, S)), false).
 
+queen_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  \+ position_filled(position(NQ, NR, NS)),
+  is_adjacent(Q, R, NQ, NR).
+
+ant_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  \+ position_filled(position(NQ, NR, NS)),
+  is_touching_hive(NQ, NR).
+
+beetle_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  is_touching_hive(NQ, NR),
+  is_adjacent(Q, R, NQ, NR).
+
+mosquito_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), C) :-
+  (C = 'q', queen_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)));
+  (C = 'a', ant_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)));
+  (C = 'l', ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)));
+  (C = 's', spider_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)));
+  (C = 'g', grasshopper_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)));
+  (C = 'b', beetle_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS))).
+
+mosquito_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  piece_neighbours(Q, R, Neighbours),
+  member(piece(NeighbourClass, _, _, _, _, _), Neighbours),
+  mosquito_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), NeighbourClass).
+
 % Move a piece to a new position or creat it if does not exist
 move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   (piece(Class, Color, Id, Q, R, S)
@@ -147,32 +172,22 @@ move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
 
 move_queen(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'q',
-  (
-    is_adjacent(Q, R, NQ, NR);
-    (Q = -1, R = -1, S = -1)
-  ),
-  \+ position_filled(position(NQ, NR, NS)),
+  queen_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_ant(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'a',
-  \+ position_filled(position(NQ, NR, NS)),
+  ant_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_beetle(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'b',
-  (
-    is_adjacent(Q, R, NQ, NR);
-    (Q = -1, R = -1, S = -1)
-  ),
+  beetle_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_grasshopper(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'g',
-  \+ position_filled(position(NQ, NR, NS)),
-  is_adjacent(AdjQ, AdjR, Q, R),
-  deltas(Q, R, AdjQ, AdjR, DQ, DR),
-  grasshopper_can_move(position(Q, R, S), position(NQ, NR, NS), position(DQ, DR, 0)),
+  grasshopper_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
 
 move_spider(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
@@ -184,6 +199,12 @@ move_ladybug(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
   Class = 'l',
   ladybug_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
   move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
+
+move_mosquito(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-
+  Class = 'm',
+  mosquito_can_move(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)),
+  move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)).
+
 
 get_side_position(position(Q, R, S), Side, position(NQ, NR, NS)) :-
   Side = "N",
@@ -280,6 +301,7 @@ step(
         move_grasshopper(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
         move_spider(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
         move_ladybug(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
+        move_mosquito(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS));
         (
           write("Invalid move.\n"),
           false
@@ -288,17 +310,34 @@ step(
     )
   ).
 
-% Test methods
-test() :-
+% Test mosquito
+test_mosquito() :-
   parse_action("wq1", A),
   step(A),
   parse_action("bq1 NW wq1", A2),
   step(A2),
   parse_action("ws1 NW bq1", A3),
   step(A3),
-  parse_action("bl1 NW ws1", A4),
+  parse_action("wm1 S wq1", A4),
   step(A4),
-  parse_action("bl1 NE ws1", A5),
+  parse_action("ba1 SW wq1", A5),
   step(A5),
+  parse_action("wm1 NE wq1", A6),
+  step(A6),
   get_pieces(Pieces),
   write(Pieces).
+
+% Test grasshopper
+test_grasshopper() :-
+  parse_action("wq1", A),
+  step(A),
+  parse_action("bq1 NW wq1", A2),
+  step(A2),
+  parse_action("ws1 NW bq1", A3),
+  step(A3),
+  parse_action("wm1 S wq1", A4),
+  step(A4),
+  parse_action("ba1 SW wq1", A5),
+  step(A5),
+  parse_action("wm1 NE wq1", A6),
+  step(A6).
