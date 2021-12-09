@@ -3,7 +3,7 @@
   write_line/1,
   write_lines/1
 ]).
-:- use_module('./src/pvp', [ pvp ]).
+:- use_module('./src/pvp', [pvp]).
 
 get_player_turn(Turn, Ans) :- Ans is 2 - mod(Turn, 2).
 
