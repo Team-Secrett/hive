@@ -17,7 +17,7 @@ choose_action(Color, Action, Turn) :-
   get_side_position(position(NQ, NR, NS), Side, position(PQ, PR, PS)),
   Action = action(piece(q, Color, Id, -1, -1, -1), piece(NClass, NColor, NId, NQ, NR, NS), Side), !.
 
-choose_action(Color, Action, Turn) :-
+choose_action(Color, Action, _) :-
   move_actions(Color, MoveActions),
   add_actions(Color, AddActions),
   append(MoveActions, AddActions, Actions),

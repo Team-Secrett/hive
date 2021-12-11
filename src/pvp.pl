@@ -5,24 +5,18 @@
   write_line/1,
   write_lines/1
 ]).
-:- use_module('./environment', [
-  parse_action/2,
-  step/2,
-  get_player_turn/2,
-  get_pieces/1,
-  winner/1
-]).
+:- use_module('./environment').
 :- use_module('./ui').
 
-pvp_loop(Turn) :-
+pvp_loop(_) :-
   winner(W),
   W = 1,
   write_line("Player 1 wins"), !.
-pvp_loop(Turn) :-
+pvp_loop(_) :-
   winner(W),
   W = 2,
   write_line("Player 2 wins"), !.
-pvp_loop(Turn) :-
+pvp_loop(_) :-
   winner(W),
   W = 0,
   write_line("Is a tie"), !.

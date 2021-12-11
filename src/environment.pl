@@ -20,7 +20,7 @@ get_piece_from_str(Str, Piece) :-
   atom_number(Id, IId),
   (
     (piece(Class, Color, IId, Q, R, S), Piece = piece(Class, Color, IId, Q, R, S));
-    (\+ piece(Class, Color, IId, Q, R, S), Piece = piece(Class, Color, IId, -1, -1, -1))
+    (\+ piece(Class, Color, IId, _, _, _), Piece = piece(Class, Color, IId, -1, -1, -1))
   ).
 
 parse_action(ActionStr, Action) :-
@@ -75,8 +75,8 @@ can_add(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), Turn) :-
     write("New position touch black piece.\n")
   ).
 
-positions_to_actions(Piece, [], ActionsSoFar, Actions) :- Actions = ActionsSoFar, !.
-positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, PS) | Positions], ActionsSoFar, Actions) :-
+positions_to_actions(_, [], ActionsSoFar, Actions) :- Actions = ActionsSoFar, !.
+positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, _) | _], _, Actions) :-
   piece_neighbours(PQ, PR, Neighbours),
   length(Neighbours, Len),
   Len = 0,
@@ -135,8 +135,8 @@ add_actions(Color, Actions) :-
 
 % -1 -> No winner yet, 0 -> Tie, elsewhere player [1 | 2] wins
 winner(Winner) :-
-  get_piece_from_str("wq1", piece(Class1, Color1, Id1, Q1, R1, S1)),
-  get_piece_from_str("bq1", piece(Class2, Color2, Id2, Q2, R2, S2)),
+  get_piece_from_str("wq1", piece(_, _, _, Q1, R1, _)),
+  get_piece_from_str("bq1", piece(_, _, _, Q2, R2, _)),
   (
     (
       is_surrounded(Q1, R1),
@@ -160,7 +160,7 @@ step(
   action(
     piece(Class1, Color1, Id1, Q1, R1, S1),
     piece(Class2, Color2, Id2, _, _, _),
-    Side
+    _
   ),
   Turn
 ) :-
@@ -171,7 +171,7 @@ step(
 step(
   action(
     piece(Class1, Color1, Id1, Q1, R1, S1),
-    piece(Class2, Color2, Id2, Q2, R2, S2),
+    piece(_, _, _, Q2, R2, S2),
     Side
   ),
   Turn

@@ -2,6 +2,7 @@
   is_adjacent/4,
   add_piece/1,
   remove_piece/1,
+  clear_pieces/0,
   get_pieces/1,
   get_pieces/2,
   cell_neighbours/4,
@@ -23,11 +24,14 @@
   all_pieces/1,
   all_pieces/2,
   has_neighbour_with_color/2,
-  pieces_in_bag/3
+  pieces_in_bag/3,
+  piece/6,
+  position/3,
+  action/3
 ]).
 :- use_module('./src/lib/string_methods').
 :- dynamic piece/6.
-:- dynamic positions/3.
+:- dynamic position/3.
 :- dynamic action/3.
 
 % Check if 2 cells are adjacent
@@ -46,6 +50,8 @@ add_piece(Piece) :- assert(Piece).
 
 % Remove a piece from local DB
 remove_piece(Piece) :- retract(Piece).
+
+clear_pieces() :- retractall(piece(_, _, _, _, _, _)).
 
 % Get DB pieces
 get_pieces(Pieces) :-
@@ -87,7 +93,7 @@ piece_neighbours(Q, R, Neighbours) :-
   ).
 
 % check if Piece is a valid piece of the game
-valid_piece(piece(Class, Color, Id, Q, N, S)) :-
+valid_piece(piece(Class, _, Id, _, _, _)) :-
   (Class = q, Id = 1);
   (Class = a, Id >= 1, Id =< 3);
   (Class = g, Id >= 1, Id =< 3);
@@ -125,7 +131,6 @@ all_pieces(Pieces) :-
 % get all pieces that are not in board
 pieces_in_bag(Color, Pieces, Length) :-
   all_pieces(Color, AllPieces),
-  get_pieces(Color, BoardPieces),
   findall(
     piece(Class, Color, Id, Q, R, S),
     (
@@ -150,7 +155,7 @@ position_filled(position(Q, R, S)) :- piece(_, _, _, Q, R, S).
 has_piece_over(position(Q, R, S)) :-
   get_pieces(Pieces),
   NS is S + 1,
-  Piece = piece(Class, Color, Id, Q, R, NS),
+  Piece = piece(_, _, _, Q, R, NS),
   member(Piece, Pieces).
 
 is_surrounded(Q, R) :-
@@ -170,12 +175,12 @@ is_touching_hive(Q1, R1, Q2, R2) :-
   \+ (Q = Q2, R = R2).
 
 % position has white neighbour
-has_white_neighbour(position(Q, R, S)) :-
+has_white_neighbour(position(Q, R, _)) :-
   piece_neighbours(Q, R, Neighbours),
   member(piece(_, Color, _, _, _, _), Neighbours),
   Color = w.
 
-has_black_neighbour(position(Q, R, S)) :-
+has_black_neighbour(position(Q, R, _)) :-
   piece_neighbours(Q, R, Neighbours),
   member(piece(_, Color, _, _, _, _), Neighbours),
   Color = b.
@@ -193,7 +198,7 @@ connected_component([piece(Class, Color, Id, Q, R, S) | Stack], Marked, Componen
   append(Stack, [Next], NStack),
   append(Marked, [Next], NMarked),
   connected_component([piece(Class, Color, Id, Q, R, S) | NStack], NMarked, Component), !.
-connected_component([Current | Stack], Marked, Component) :-
+connected_component([_ | Stack], Marked, Component) :-
   connected_component(Stack, Marked, Component).
 
 % Check if a piece is an articulation point (breaks the hive if removed)
@@ -250,7 +255,7 @@ get_side_position(position(Q, R, S), Side, position(NQ, NR, NS)) :-
   NS is S + 1.
 
 % get side positions of a piece
-side_positions(piece(Class, Color, Id, Q, R, S), SidePositions) :-
+side_positions(piece(_, _, _, Q, R, S), SidePositions) :-
   findall(Pos, get_side_position(position(Q, R, S), _, Pos), SidePositions).
 
 % get game positions (filled & frontiers)

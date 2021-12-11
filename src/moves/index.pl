@@ -13,8 +13,8 @@
   add_moves/1
 ]).
 :- use_module('./src/lib/string_methods').
-:- use_module([utils], [piece/6, position/3]).
-:- use_module([utils]).
+:- use_module('./src/moves/utils', [piece/6, position/3]).
+:- use_module('./src/moves/utils').
 
 % Move a piece to a new position or creat it if does not exist
 move_piece(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS)) :-

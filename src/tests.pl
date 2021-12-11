@@ -1,19 +1,13 @@
-:- use_module('./environment', [
-  parse_action/2,
-  step/2,
-  get_pieces/1,
-  winner/1
-]).
+:- use_module('./environment').
 :- use_module('./moves/utils').
 :- use_module('./moves/index').
 :- use_module('./lib/string_methods').
 :- use_module('./agent').
 
-do_simulation([], Turn).
+do_simulation([], _).
 do_simulation([Current | ActionStrs], Turn) :-
   parse_action(Current, Action),
   step(Action, Turn),
-  get_pieces(P),
   NextTurn is Turn + 1,
   do_simulation(ActionStrs, NextTurn).
 
@@ -108,5 +102,5 @@ test_spider_moves() :-
 
 test() :-
   test_spider_moves(),
-  get_pieces(P),
+  get_pieces(_),
   write('\n').
