@@ -27,7 +27,10 @@
   pieces_in_bag/3,
   piece/6,
   position/3,
-  action/3
+  action/3,
+  free_pieces/2,
+  piece_over/2,
+  piece_down/2
 ]).
 :- use_module('./src/lib/string_methods').
 :- dynamic piece/6.
@@ -91,6 +94,18 @@ piece_neighbours(Q, R, Neighbours) :-
     ),
     Neighbours
   ).
+
+piece_over(position(PQ, PR, PS), Piece) :-
+  get_pieces(Pieces),
+  member(piece(Class, Color, Id, Q, R, S), Pieces),
+  S is PS + 1,
+  Piece = piece(Class, Color, Id, Q, R, S).
+
+piece_down(position(PQ, PR, PS), Piece) :-
+  get_pieces(Pieces),
+  member(piece(Class, Color, Id, Q, R, S), Pieces),
+  S is PS - 1,
+  Piece = piece(Class, Color, Id, Q, R, S).
 
 % check if Piece is a valid piece of the game
 valid_piece(piece(Class, _, Id, _, _, _)) :-
@@ -271,3 +286,11 @@ positions(Positions, Len) :-
   get_pieces(Pieces),
   positions(Pieces, [], Positions),
   length(Positions, Len).
+
+free_pieces(Color, Pieces) :-
+  get_pieces(Color, Pieces),
+  findall(
+    piece(Class, Color, Id, Q, R, S),
+    (member(piece(Class, Color, Id, Q, R, S), Pieces), \+ is_surrounded(Q, R)),
+    Pieces
+  ).

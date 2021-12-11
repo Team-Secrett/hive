@@ -1,11 +1,13 @@
 :- module(environment, [
   step/2,
+  undo_action/2,
   parse_action/2,
   get_player_turn/2,
   winner/1,
   move_actions/1,
   move_actions/2,
-  add_actions/2
+  add_actions/2,
+  get_piece_from_str/2
 ]).
 :- use_module('./lib/string_methods').
 :- use_module('./moves/index').
@@ -85,6 +87,19 @@ positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, _) | _]
     piece(Class, Color, Id, Q, R, S),
     _
   )], !.
+positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, PS) | Positions], ActionsSoFar, Actions) :-
+  is_adjacent(Q, R, PQ, PR),
+  piece_down(position(PQ, PR, PS), PieceDown),
+  append(
+    ActionsSoFar,
+    [action(
+      piece(Class, Color, Id, Q, R, S),
+      PieceDown,
+      "O"
+    )],
+    NActions
+  ),
+  positions_to_actions(piece(Class, Color, Id, Q, R, S), Positions, NActions, Actions), !.
 positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, PS) | Positions], ActionsSoFar, Actions) :-
   piece_neighbours(PQ, PR, Neighbours),
   member(piece(NClass, NColor, NId, NQ, NR, NS), Neighbours),
@@ -198,5 +213,35 @@ step(
           false
         )
       )
+    )
+  ).
+
+% Undo an action (only use with last action)
+undo_action(
+  action(
+    piece(Class1, Color1, Id1, Q1, R1, S1),
+    piece(Class2, Color2, Id2, _, _, _),
+    _
+  ),
+  Turn
+) :-
+  Turn = 1,
+  Class1 = Class2, Color1 = Color2, Id1 = Id2,
+  remove_piece(piece(Class1, Color1, Id1, 0, 0, 0)).
+undo_action(
+  action(
+    piece(Class1, Color1, Id1, Q1, R1, S1),
+    piece(_, _, _, Q2, R2, S2),
+    Side
+  ),
+  Turn
+) :-
+  get_side_position(position(Q2, R2, S2), Side, position(NQ, NR, NS)),
+  (S1 = -1 ->
+    (
+      remove_piece(piece(Class1, Color1, Id1, NQ, NR, NS))
+    );
+    (
+      move_piece(piece(Class1, Color1, Id1, NQ, NR, NS), position(Q1, R1, S1))
     )
   ).

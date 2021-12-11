@@ -10,7 +10,8 @@
   ant_can_move/2,
   piece_moves/2,
   add_moves/2,
-  add_moves/1
+  add_moves/1,
+  oposite_color/2
 ]).
 :- use_module('./src/lib/string_methods').
 :- use_module('./src/moves/utils', [piece/6, position/3]).

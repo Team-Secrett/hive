@@ -100,7 +100,42 @@ test_spider_moves() :-
     "wa1 N wq1"
   ], 1).
 
+test_undo() :-
+  choose_action(w, Action, 1),
+  write_line(Action),
+  step(Action, 1),
+  choose_action(b, Action2, 2),
+  write_line(Action2),
+  step(Action2, 2),
+  choose_action(w, Action3, 3),
+  write_line(Action3),
+  step(Action3, 3),
+  choose_action(b, Action4, 4),
+  write_line(Action4),
+  step(Action4, 4),
+  choose_action(w, Action5, 5),
+  write_line(Action5),
+  step(Action5, 5),
+  choose_action(b, Action6, 6),
+  write_line(Action6),
+  step(Action6, 6),
+  choose_action(w, Action7, 7),
+  write_line(Action7),
+  step(Action7, 7),
+  choose_action(b, Action8, 8),
+  write_line(Action8),
+  step(Action8, 8),
+  undo_action(Action8, 8),
+  undo_action(Action7, 7),
+  undo_action(Action6, 6),
+  undo_action(Action5, 5),
+  undo_action(Action4, 4),
+  undo_action(Action3, 3),
+  undo_action(Action2, 2),
+  undo_action(Action, 1). 
+
 test() :-
-  test_spider_moves(),
-  get_pieces(_),
+  test_undo(),
+  get_pieces(P),
+  write(P),
   write('\n').
