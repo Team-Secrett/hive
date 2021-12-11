@@ -12,16 +12,7 @@
   get_pieces/1,
   winner/1
 ]).
-
-
-turn_info(Turn) :-
-  get_player_turn(Turn, PlayerTurn),
-  write_list(['Turn: ', Turn, '\n']),
-  write_list(['Player ', PlayerTurn, '\n']),
-  get_pieces(Pieces),
-  write_line(Pieces).
-
-clear_screen() :- write('\33\[2J').
+:- use_module('./ui').
 
 pvp_loop(Turn) :-
   winner(W),

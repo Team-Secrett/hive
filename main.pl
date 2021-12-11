@@ -4,12 +4,14 @@
   write_lines/1
 ]).
 :- use_module('./src/pvp', [pvp]).
+:- use_module('./src/pve', [pve]).
 
 get_player_turn(Turn, Ans) :- Ans is 2 - mod(Turn, 2).
 
 handle_option(Option) :-
   Option =:= "1",
-  write_line('Option 1: NOT IMPLEMENTED YET').
+  write_line('Option 1'),
+  pve().
 handle_option(Option) :-
   Option =:= "2",
   write_line('Option 2'),

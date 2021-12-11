@@ -2,11 +2,14 @@
   step/2,
   parse_action/2,
   get_player_turn/2,
-  winner/1
+  winner/1,
+  move_actions/1,
+  move_actions/2,
+  add_actions/2
 ]).
 :- use_module('./lib/string_methods').
 :- use_module('./moves/index').
-:- use_module('./moves/utils', [piece/6]).
+:- use_module('./moves/utils', [piece/6, action/3]).
 :- use_module('./moves/utils').
 
 % Get the player turn (1 or 2) based on current Turn number
@@ -46,6 +49,19 @@ can_move(piece(Class, Color, Id, Q, R, S)) :-
   ).
 
 can_add(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), Turn) :-
+  get_player_turn(Turn, PlayerTurn),
+  \+ (
+    \+ valid_piece(piece(Class, Color, Id, Q, R, S)),
+    write("Invalid piece.\n")
+  ),
+  \+ (
+    PlayerTurn = 1, Color = b,
+    write("You should move a white piece.\n")
+  ),
+  \+ (
+    PlayerTurn = 2, Color = w,
+    write("You should move a black piece.\n")
+  ),
   \+ (
     position_filled(NQ, NR),
     write("The position is already occuppied.\n")
@@ -58,6 +74,64 @@ can_add(piece(Class, Color, Id, Q, R, S), position(NQ, NR, NS), Turn) :-
     (Turn > 2, Color = w, has_black_neighbour(position(NQ, NR, NS))),
     write("New position touch black piece.\n")
   ).
+
+positions_to_actions(Piece, [], ActionsSoFar, Actions) :- Actions = ActionsSoFar, !.
+positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, PS) | Positions], ActionsSoFar, Actions) :-
+  piece_neighbours(PQ, PR, Neighbours),
+  length(Neighbours, Len),
+  Len = 0,
+  Actions = [action(
+    piece(Class, Color, Id, Q, R, S),
+    piece(Class, Color, Id, Q, R, S),
+    _
+  )], !.
+positions_to_actions(piece(Class, Color, Id, Q, R, S), [position(PQ, PR, PS) | Positions], ActionsSoFar, Actions) :-
+  piece_neighbours(PQ, PR, Neighbours),
+  member(piece(NClass, NColor, NId, NQ, NR, NS), Neighbours),
+  \+ (NClass = Class, NColor = Color, NId = Id),
+  get_side_position(position(NQ, NR, NS), Side, position(PQ, PR, PS)),
+  append(
+    ActionsSoFar,
+    [action(
+      piece(Class, Color, Id, Q, R, S),
+      piece(NClass, NColor, NId, NQ, NR, NS),
+      Side
+    )],
+    NActions
+  ),
+  positions_to_actions(piece(Class, Color, Id, Q, R, S), Positions, NActions, Actions).
+
+build_move_actions([], ActionsSoFar, Actions) :-
+  Actions = ActionsSoFar, !.
+build_move_actions([CurrentPiece | Pieces], ActionsSoFar, Actions) :-
+  piece_moves(CurrentPiece, Moves),
+  positions_to_actions(CurrentPiece, Moves, [], CurrentActions),
+  append(ActionsSoFar, CurrentActions, NActions),
+  build_move_actions(Pieces, NActions, Actions).
+
+% Get available move actions by a color
+move_actions(Color, Actions) :-
+  get_pieces(Color, Pieces),
+  build_move_actions(Pieces, [], Actions).
+
+% Get available move actions
+move_actions(Actions) :-
+  move_actions(w, WhiteActions),
+  move_actions(b, BlackActions),
+  append(WhiteActions, BlackActions, Actions).
+
+build_add_actions([], ActionsSoFar, Actions) :-
+  Actions = ActionsSoFar, !.
+build_add_actions([piece(Class, Color, Id, Q, R, S) | Pieces], ActionsSoFar, Actions) :-
+  add_moves(Color, Moves),
+  positions_to_actions(piece(Class, Color, Id, Q, R, S), Moves, [], CurrentActions),
+  append(ActionsSoFar, CurrentActions, NActions),
+  build_add_actions(Pieces, NActions, Actions).
+
+% Get available add actions
+add_actions(Color, Actions) :-
+  pieces_in_bag(Color, Pieces, _),
+  build_add_actions(Pieces, [], Actions).
 
 % -1 -> No winner yet, 0 -> Tie, elsewhere player [1 | 2] wins
 winner(Winner) :-
@@ -85,12 +159,14 @@ winner(Winner) :-
 step(
   action(
     piece(Class1, Color1, Id1, Q1, R1, S1),
-    piece(Class2, Color2, Id2, Q2, R2, S2),
+    piece(Class2, Color2, Id2, _, _, _),
     Side
   ),
   Turn
 ) :-
   Class1 = Class2, Color1 = Color2, Id1 = Id2,
+  (Turn > 1 -> write("Invalid Action.\n"), false, ! ; true),
+  can_add(piece(Class1, Color1, Id1, Q1, R1, S1), position(0, 0, 0), Turn),
   add_piece(piece(Class1, Color1, Id1, 0, 0, 0)), !.
 step(
   action(
@@ -100,8 +176,9 @@ step(
   ),
   Turn
 ) :-
+  (S2 = -1 -> write("Destination move is not in board.\n"), !, false ; true),
   get_side_position(position(Q2, R2, S2), Side, position(NQ, NR, NS)),
-  (Q1 = -1, R1 = -1, S1 = -1 ->
+  (S1 = -1 ->
     (
       can_add(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS), Turn),
       move_piece(piece(Class1, Color1, Id1, Q1, R1, S1), position(NQ, NR, NS))
