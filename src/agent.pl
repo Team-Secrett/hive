@@ -49,7 +49,7 @@ board_value(Color, Value) :-
 board_value(Color, Value) :-
   winner(W),
   W = 0,
-  Value = 250.
+  Value = 5.
 board_value(Color, Value) :-
   oposite_color(Color, Oposite),
   % free pieces
